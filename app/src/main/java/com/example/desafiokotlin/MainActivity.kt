@@ -1,47 +1,110 @@
 package com.example.desafiokotlin
 
+import android.app.Activity
+import android.content.Intent
 import android.os.Bundle
-import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
-import com.example.desafiokotlin.ui.theme.DesafioKotlinTheme
+import android.widget.Button
+import android.widget.EditText
+import android.widget.Toast
 
-class MainActivity : ComponentActivity() {
+class MainActivity : Activity() {
+
+    // Views da tela
+    private lateinit var editTextName: EditText
+    private lateinit var editTextPassword: EditText
+    private lateinit var buttonLogin: Button
+
+    // Usuário de exemplo (em app real viria de banco de dados)
+    private val validUser = User(
+        name = "Joao",
+        password = "123456",
+        gender = "Masculino"
+    )
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
-        setContent {
-            DesafioKotlinTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Greeting(
-                        name = "Android",
-                        modifier = Modifier.padding(innerPadding)
-                    )
-                }
-            }
+        setContentView(R.layout.activity_main)
+
+        initializeViews()
+        setupLoginButton()
+    }
+
+    private fun initializeViews() {
+        editTextName = findViewById(R.id.editTextName)
+        editTextPassword = findViewById(R.id.editTextPassword)
+        buttonLogin = findViewById(R.id.buttonLogin)
+    }
+
+    private fun setupLoginButton() {
+        buttonLogin.setOnClickListener {
+            performLogin()
         }
     }
-}
 
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
-}
+    private fun performLogin() {
+        val inputName = editTextName.text.toString().trim()
+        val inputPassword = editTextPassword.text.toString().trim()
 
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    DesafioKotlinTheme {
-        Greeting("Android")
+        // Valida campos vazios
+        if (!validateInputs(inputName, inputPassword)) {
+            return
+        }
+
+        // Verifica credenciais
+        if (authenticateUser(inputName, inputPassword)) {
+            navigateToWelcome()
+        } else {
+            showLoginError()
+        }
+    }
+
+    private fun validateInputs(name: String, password: String): Boolean {
+        return when {
+            name.isEmpty() -> {
+                showError("Por favor, digite seu nome")
+                false
+            }
+            password.isEmpty() -> {
+                showError("Por favor, digite sua senha")
+                false
+            }
+            else -> true
+        }
+    }
+
+    private fun authenticateUser(name: String, password: String): Boolean {
+        return name.equals(validUser.name, ignoreCase = true) &&
+                password == validUser.password
+    }
+
+    private fun navigateToWelcome() {
+        val intent = Intent(this, WelcomeActivity::class.java).apply {
+            putExtra("USER_NAME", validUser.name)
+            putExtra("USER_PASSWORD", validUser.password)
+            putExtra("USER_GENDER", validUser.gender)
+        }
+
+        // Limpa os campos após login bem-sucedido
+        clearInputFields()
+
+        startActivity(intent)
+        showSuccess("Login realizado com sucesso!")
+    }
+
+    private fun clearInputFields() {
+        editTextName.setText("")
+        editTextPassword.setText("")
+    }
+
+    private fun showLoginError() {
+        showError("❌ Nome ou senha incorretos!")
+    }
+
+    private fun showError(message: String) {
+        Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
+    }
+
+    private fun showSuccess(message: String) {
+        Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
     }
 }
